@@ -1,0 +1,12 @@
+{
+  "name": "ds18b20",
+  "version": "0.0.0",
+  "bin": "./source",
+  "private": true,
+  "description": "test ds18b20",
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+      "microbit": "lancaster-university/microbit"
+    }
+}

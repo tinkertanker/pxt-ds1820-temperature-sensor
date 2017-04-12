@@ -1,0 +1,8 @@
+/Users/steven/Dropbox/Projects/ds18b20/build/bbc-microbit-classic-gcc/ym/ble/source/CMakeFiles/ble.dir
+/Users/steven/Dropbox/Projects/ds18b20/build/bbc-microbit-classic-gcc/ym/ble-nrf51822/source/CMakeFiles/ble-nrf51822.dir
+/Users/steven/Dropbox/Projects/ds18b20/build/bbc-microbit-classic-gcc/ym/mbed-classic/existing/CMakeFiles/mbed-classic.dir
+/Users/steven/Dropbox/Projects/ds18b20/build/bbc-microbit-classic-gcc/source/CMakeFiles/ds18b20.dir
+/Users/steven/Dropbox/Projects/ds18b20/build/bbc-microbit-classic-gcc/ym/microbit/source/CMakeFiles/microbit.dir
+/Users/steven/Dropbox/Projects/ds18b20/build/bbc-microbit-classic-gcc/ym/nrf51-sdk/source/CMakeFiles/nrf51-sdk.dir
+/Users/steven/Dropbox/Projects/ds18b20/build/bbc-microbit-classic-gcc/CMakeFiles/all_tests.dir
+/Users/steven/Dropbox/Projects/ds18b20/build/bbc-microbit-classic-gcc/ym/microbit-dal/source/CMakeFiles/microbit-dal.dir

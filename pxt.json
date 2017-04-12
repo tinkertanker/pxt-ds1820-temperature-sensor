@@ -1,0 +1,32 @@
+{
+    "name": "cpptemplate",
+    "version": "0.0.1",
+    "description": "Tinkercademy PXT CPP Template Package",
+    "license": "MIT",
+    "dependencies": {
+        "core": "*"
+    },
+    "files": [
+        "README.md",
+        "shims.d.ts",
+        "enums.d.ts",
+        "ds1820-pxt.cpp",
+        "source/DS1820.cpp",
+        "source/DS1820.h",
+        "source/LinkedList.cpp",
+        "source/LinkedList.h"
+    ],
+    "testFiles": [
+        "cpptemplatetest.ts"
+    ],
+    "yotta": {
+        "config": {
+            "microbit-dal": {
+                "bluetooth": {
+                    "enabled": 0
+                }
+            }
+        }
+    },
+    "public": true
+}
