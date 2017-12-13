@@ -1,5 +1,3 @@
-for PXT/microbit
-
 # Sample PXT-microbit CPP Package Template
 
 This is the template PXT-microbit CPP Package used by Tinkertanker.
