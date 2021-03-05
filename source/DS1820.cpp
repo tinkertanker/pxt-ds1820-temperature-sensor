@@ -1,42 +1,32 @@
 #include "DS1820.h"
 
-#ifdef TARGET_STM
-//STM targets use opendrain mode since their switching between input and output is slow
-    #define ONEWIRE_INPUT(pin)  pin->write(1)
-    #define ONEWIRE_OUTPUT(pin) 
-    #define ONEWIRE_INIT(pin)   pin->output(); pin->mode(OpenDrain)
-#else
-    #define ONEWIRE_INPUT(pin)  pin->input()
-    #define ONEWIRE_OUTPUT(pin) pin->output()
-    #define ONEWIRE_INIT(pin)
-#endif
+#define ONEWIRE_INPUT(pin)  pin->getDigitalValue() // Set as Digital Input
+#define ONEWIRE_OUTPUT(pin) // Set as Digital Output
+#define ONEWIRE_INIT(pin)
 
-#ifdef TARGET_NORDIC
 //NORDIC targets (NRF) use software delays since their ticker uses a 32kHz clock
-    static uint32_t loops_per_us = 0;
-    
-    #define INIT_DELAY      init_soft_delay()
-    #define ONEWIRE_DELAY_US(value) for(int cnt = 0; cnt < (value * loops_per_us) >> 5; cnt++) {__NOP(); __NOP(); __NOP();}
+static uint32_t loops_per_us = 0;
+
+#define INIT_DELAY      init_soft_delay()
+#define ONEWIRE_DELAY_US(value) for(int cnt = 0; cnt < (value * loops_per_us) >> 5; cnt++) {__NOP(); __NOP(); __NOP();}
     
 void init_soft_delay( void ) {
     if (loops_per_us == 0) {
         loops_per_us = 1;
-        Timer timey; 
-        timey.start();
+        int start_time = system_timer_current_time_us();
         ONEWIRE_DELAY_US(320000);                     
-        timey.stop();
-        loops_per_us = (320000 + timey.read_us() / 2) / timey.read_us();  
+        int elapsed_time = system_timer_current_time_us() - start_time;
+        loops_per_us = (320000 + elapsed_time / 2) / elapsed_time;  
     }
 }
-#else
-    #define INIT_DELAY
-    #define ONEWIRE_DELAY_US(value) wait_us(value)
-#endif
 
 LinkedList<node> DS1820::probes;
  
  
-DS1820::DS1820 (PinName data_pin, PinName power_pin, bool power_polarity) : _datapin(data_pin), _parasitepin(power_pin) {
+DS1820::DS1820 (PinName data_pin, PinName power_pin, bool power_polarity) {
+    _datapin = getPin(data_pin);
+    _parasitepin = getPin(power_pin);
+
     int byte_counter;
     _power_polarity = power_polarity;
 
@@ -45,13 +35,13 @@ DS1820::DS1820 (PinName data_pin, PinName power_pin, bool power_polarity) : _dat
     for(byte_counter=0;byte_counter<9;byte_counter++)
         RAM[byte_counter] = 0x00;
     
-    ONEWIRE_INIT((&_datapin));
+    ONEWIRE_INIT((_datapin));
     INIT_DELAY;
     
-    if (!unassignedProbe(&_datapin, _ROM))
-        error("No unassigned DS1820 found!\n");
-    else {
-        _datapin.input();
+    if (!unassignedProbe(_datapin, _ROM)) {
+        // error("No unassigned DS1820 found!\n");
+    } else {
+        _datapin->getDigitalValue(); // set mode to input
         probes.append(this);
         _parasite_power = !read_power_supply();
     }
@@ -68,30 +58,30 @@ DS1820::~DS1820 (void) {
 }
 
  
-bool DS1820::onewire_reset(DigitalInOut *pin) {
+bool DS1820::onewire_reset(MicroBitPin *pin) {
 // This will return false if no devices are present on the data bus
     bool presence=false;
     ONEWIRE_OUTPUT(pin);
-    pin->write(0);          // bring low for 500 us
+    pin->setDigitalValue(0);          // bring low for 500 us
     ONEWIRE_DELAY_US(500);
     ONEWIRE_INPUT(pin);       // let the data line float high
     ONEWIRE_DELAY_US(90);            // wait 90us
-    if (pin->read()==0) // see if any devices are pulling the data line low
+    if (pin->getDigitalValue()==0) // see if any devices are pulling the data line low
         presence=true;
     ONEWIRE_DELAY_US(410);
     return presence;
 }
  
-void DS1820::onewire_bit_out (DigitalInOut *pin, bool bit_data) {
+void DS1820::onewire_bit_out (MicroBitPin *pin, bool bit_data) {
     ONEWIRE_OUTPUT(pin);
-    pin->write(0);
+    pin->setDigitalValue(0);
     ONEWIRE_DELAY_US(3);                 // DXP modified from 5
     if (bit_data) {
-        pin->write(1); // bring data line high
+        pin->setDigitalValue(1); // bring data line high
         ONEWIRE_DELAY_US(55);
     } else {
         ONEWIRE_DELAY_US(55);            // keep data line low
-        pin->write(1);
+        pin->setDigitalValue(1);
         ONEWIRE_DELAY_US(10);            // DXP added to allow bus to float high before next bit_out
     }
 }
@@ -99,19 +89,19 @@ void DS1820::onewire_bit_out (DigitalInOut *pin, bool bit_data) {
 void DS1820::onewire_byte_out(char data) { // output data character (least sig bit first).
     int n;
     for (n=0; n<8; n++) {
-        onewire_bit_out(&this->_datapin, data & 0x01);
+        onewire_bit_out(this->_datapin, data & 0x01);
         data = data >> 1; // now the next bit is in the least sig bit position.
     }
 }
  
-bool DS1820::onewire_bit_in(DigitalInOut *pin) {
+bool DS1820::onewire_bit_in(MicroBitPin *pin) {
     bool answer;
     ONEWIRE_OUTPUT(pin);
-    pin->write(0);
+    pin->setDigitalValue(0);
     ONEWIRE_DELAY_US(3);                 // DXP modofied from 5
     ONEWIRE_INPUT(pin);
     ONEWIRE_DELAY_US(10);                // DXP modified from 5
-    answer = pin->read();
+    answer = pin->getDigitalValue();
     ONEWIRE_DELAY_US(45);                // DXP modified from 50
     return answer;
 }
@@ -121,25 +111,25 @@ char DS1820::onewire_byte_in() { // read byte, least sig byte first
     int i;
     for (i=0; i<8; i++) {
         answer = answer >> 1; // shift over to make room for the next bit
-        if (onewire_bit_in(&this->_datapin))
+        if (onewire_bit_in(this->_datapin))
             answer = answer | 0x80; // if the data port is high, make this bit a 1
     }
     return answer;
 }
 
 bool DS1820::unassignedProbe(PinName pin) {
-    DigitalInOut _pin(pin);
-    ONEWIRE_INIT((&_pin));
+    MicroBitPin* _pin = getPin(pin);
+    ONEWIRE_INIT((_pin));
     INIT_DELAY;
     char ROM_address[8];
-    return search_ROM_routine(&_pin, 0xF0, ROM_address);
+    return search_ROM_routine(_pin, 0xF0, ROM_address);
 }
  
-bool DS1820::unassignedProbe(DigitalInOut *pin, char *ROM_address) {
+bool DS1820::unassignedProbe(MicroBitPin *pin, char *ROM_address) {
     return search_ROM_routine(pin, 0xF0, ROM_address);
 }
  
-bool DS1820::search_ROM_routine(DigitalInOut *pin, char command, char *ROM_address) {
+bool DS1820::search_ROM_routine(MicroBitPin *pin, char command, char *ROM_address) {
     bool DS1820_done_flag = false;
     int DS1820_last_descrepancy = 0;
     char DS1820_search_ROM[8] = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -239,7 +229,7 @@ bool DS1820::search_ROM_routine(DigitalInOut *pin, char command, char *ROM_addre
 void DS1820::match_ROM() {
 // Used to select a specific device
     int i;
-    onewire_reset(&this->_datapin);
+    onewire_reset(this->_datapin);
     onewire_byte_out( 0x55);  //Match ROM command
     for (i=0;i<8;i++) {
         onewire_byte_out(_ROM[i]);
@@ -247,7 +237,7 @@ void DS1820::match_ROM() {
 }
  
 void DS1820::skip_ROM() {
-    onewire_reset(&this->_datapin);
+    onewire_reset(this->_datapin);
     onewire_byte_out(0xCC);   // Skip ROM command
 }
  
@@ -323,19 +313,18 @@ int DS1820::convertTemperature(bool wait, devices device) {
     onewire_byte_out( 0x44);  // perform temperature conversion
     if (_parasite_power) {
         if (_power_mosfet) {
-            _parasitepin = _power_polarity;     // Parasite power strong pullup
-            wait_ms(delay_time);
-            _parasitepin = !_power_polarity;
+            _parasitepin->setDigitalValue(_power_polarity);     // Parasite power strong pullup
+            sleep_ms(delay_time);
+            _parasitepin->setDigitalValue(!_power_polarity);
             delay_time = 0;
         } else {
-            _datapin.output();
-            _datapin.write(1);
-            wait_ms(delay_time);
-            _datapin.input();
+            _datapin->setDigitalValue(1);
+            sleep_ms(delay_time);
+            _datapin->getDigitalValue();
         }
     } else {
         if (wait) {
-            wait_ms(delay_time);
+            sleep_ms(delay_time);
             delay_time = 0;
         }
     }
@@ -422,7 +411,7 @@ bool DS1820::read_power_supply(devices device) {
     else
         match_ROM();
     onewire_byte_out(0xB4);   // Read power supply command
-    return onewire_bit_in(&this->_datapin);
+    return onewire_bit_in(this->_datapin);
 }
 
 

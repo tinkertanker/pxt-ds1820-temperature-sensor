@@ -47,7 +47,7 @@ retT *LinkedList<retT>::push(void *data)
     // make sure the new object was allocated
     if (0 == new_node)
     {
-        error("Memory allocation failed\n");
+        //error("Memory allocation failed\n");
     }
     // update the next item in the list to the current head
     new_node->next = _head;
@@ -96,7 +96,7 @@ retT *LinkedList<retT>::append(void *data)
     // make sure the new object was allocated
     if (0 == new_node)
     {
-        error("Memory allocation failed\n");
+        //error("Memory allocation failed\n");
     }
     // store the address to the linked datatype
     new_node->data = data;

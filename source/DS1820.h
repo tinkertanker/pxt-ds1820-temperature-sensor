@@ -23,7 +23,8 @@
 #ifndef MBED_DS1820_H
 #define MBED_DS1820_H
 
-#include "mbed.h"
+#include "MicroBit.h"
+#include "pxt.h"
 #include "LinkedList.h"
 
 #define FAMILY_CODE _ROM[0]
@@ -67,7 +68,7 @@ public:
     * is used to supply extra power when required. This will be sufficient as long as the 
     * number of probes is limitted.
      *
-     * @param data_pin DigitalInOut pin for the data bus
+     * @param data_pin MicroBitPin pin for the data bus
      * @param power_pin DigitalOut (optional) pin to control the power MOSFET
      * @param power_polarity bool (optional) which sets active state (0 for active low (default), 1 for active high)
      */
@@ -113,23 +114,23 @@ private:
     bool _power_polarity;
     
     static char CRC_byte(char _CRC, char byte );
-    static bool onewire_reset(DigitalInOut *pin);
+    static bool onewire_reset(MicroBitPin *pin);
     void match_ROM();
     void skip_ROM();
-    static bool search_ROM_routine(DigitalInOut *pin, char command, char *ROM_address);
-    static void onewire_bit_out (DigitalInOut *pin, bool bit_data);
+    static bool search_ROM_routine(MicroBitPin *pin, char command, char *ROM_address);
+    static void onewire_bit_out (MicroBitPin *pin, bool bit_data);
     void onewire_byte_out(char data);
-    static bool onewire_bit_in(DigitalInOut *pin);
+    static bool onewire_bit_in(MicroBitPin *pin);
     char onewire_byte_in();
     static bool ROM_checksum_error(char *_ROM_address);
     bool RAM_checksum_error();
     void read_RAM();
-    static bool unassignedProbe(DigitalInOut *pin, char *ROM_address);
+    static bool unassignedProbe(MicroBitPin *pin, char *ROM_address);
     void write_scratchpad(int data);
     bool read_power_supply(devices device=this_device);
 
-    DigitalInOut _datapin;
-    DigitalOut _parasitepin;
+    MicroBitPin* _datapin;
+    MicroBitPin* _parasitepin;
     
     char _ROM[8];
     char RAM[9];

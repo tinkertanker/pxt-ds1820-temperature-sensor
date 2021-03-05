@@ -24,7 +24,7 @@
 #define LINKEDLIST_H_
 
 #include <stdint.h>
-#include "mbed.h"
+#include <pxt.h>
 
 /**
  *  @struct node

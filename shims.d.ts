@@ -18,7 +18,7 @@ declare namespace DS1820pxt {
      */
     //% blockId = get_temp
     //% block="temperature" shim=DS1820pxt::temp1dp
-    function temp1dp(): number;
+    function temp1dp(): int32;
 }
 
 // Auto-generated. Do not edit. Really.
